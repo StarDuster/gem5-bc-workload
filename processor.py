@@ -37,8 +37,9 @@ from gem5.components.processors.base_cpu_processor import BaseCPUProcessor
 from gem5.isas import ISA
 from gem5.components.processors.cpu_types import CPUTypes
 
-from m5.objects import X86O3CPU
+from m5.objects.X86CPU import X86O3CPU
 
+from processors.core import VerbatimCPU, TunedCPU, UnconstrainedCPU
 
 class OutOfOrderCore(BaseCPUCore):
     """
@@ -63,6 +64,36 @@ class OutOfOrderCore(BaseCPUCore):
 
         self.core.numROBEntries = rob_entries
 
+class VerbatimCore(BaseCPUCore):
+    """
+    An out of order core for X86.
+    The LSQ depth (split equally between loads and stores), the width of the
+    core, and the number of entries in the reorder buffer are configurable.
+    """
+
+    def __init__(self, core_id):
+        super().__init__(core=VerbatimCPU(cpu_id=core_id), isa=ISA.X86)
+
+class TunedCore(BaseCPUCore):
+    """
+    An out of order core for X86.
+    The LSQ depth (split equally between loads and stores), the width of the
+    core, and the number of entries in the reorder buffer are configurable.
+    """
+
+    def __init__(self, core_id):
+        super().__init__(core=TunedCPU(cpu_id=core_id), isa=ISA.X86)
+
+class UnconstrainedCore(BaseCPUCore):
+    """
+    An out of order core for X86.
+    The LSQ depth (split equally between loads and stores), the width of the
+    core, and the number of entries in the reorder buffer are configurable.
+    """
+
+    def __init__(self, core_id):
+        super().__init__(core=UnconstrainedCPU(cpu_id=core_id), isa=ISA.X86)
+
 
 class OutOfOrderProcessor(BaseCPUProcessor):
     """
@@ -82,4 +113,24 @@ class OutOfOrderProcessor(BaseCPUProcessor):
                     rob_entries=rob_entries,
                 )
             ]
+        )
+
+class SkylakeProcessor(BaseCPUProcessor):
+    """
+    A single core out of order processor for X86.
+    The LSQ depth (split equally between loads and stores), the width of the
+    core, and the number of entries in the reorder buffer are configurable.
+    """
+
+    def __init__(self, cpu_type):
+        self._cpu_type = CPUTypes.O3
+        if cpu_type == "verbatim":
+            skylakecore=[VerbatimCore(core_id=0,)]
+        elif cpu_type == "tuned":
+            skylakecore=[TunedCore(core_id=0,)]
+        else:
+            skylakecore=[UnconstrainedCore(core_id=0,)]
+
+        super().__init__(
+            cores = skylakecore
         )

@@ -48,7 +48,7 @@ from gem5.simulate.exit_event_generators import (
     exit_generator,
 )
 
-from board import SimpleX86Board, OutOfOrderProcX86Board
+from board import SimpleX86Board, OutOfOrderProcX86Board, SkylakeX86Board
 from workload import mm_workload
 
 from argparse import ArgumentParser
@@ -70,53 +70,54 @@ def setup_arguments():
 
     parser.add_argument(
         "--processor_type",
-        choices=["simple", "out-of-order"],
+        choices=["simple", "out-of-order", "verbatim", "tuned", "unconstrained"],
         help="Simple processor is an in-order single cycle CPU.",
-        default="simple",
+        default="out-of-order",
     )
 
     parser.add_argument(
-        "--frequency",
-        type=str,
-        default="3GHz",
-        help="The frequency of the system (processor and caches)",
+        "--l1dmshr",
+        type=int,
+        help="Number of L1 data cache mshrs",
+        default=2,
     )
+    
     parser.add_argument(
-        "--l1_size",
-        default="32KiB",
-        type=str,
-        help="Size of the L1D and L1I caches",
-    )
-    parser.add_argument(
-        "--l2_size",
-        type=str,
-        default="256KiB",
-        help="Size of unified L2 cache",
+        "--l1dwb",
+        type=int,
+        default=2,
+        help="Number of L1 data cache writebuffers",
     )
 
     parser.add_argument(
-        "--width",
+        "--l2mshr",
         type=int,
-        help="Width of the out-of-order processor",
-        default=4,
+        help="Number of L2 cache mshrs",
+        default=2,
     )
+
     parser.add_argument(
-        "--lsq_depth",
+        "--l2wb",
         type=int,
-        default=64,
-        help="Number of entries in the LSQ (split evenly between load and "
-        "store) for the out-of-order processor",
+        default=2,
+        help="Number of L2 cache writebuffers",
     )
+
     parser.add_argument(
-        "--rob_entries",
+        "--l3mshr",
         type=int,
-        default=128,
-        help="The number of entires in the reorder buffer of the out-of-order "
-        "processor",
+        help="Number of L3 cache mshrs",
+        default=2,
+    )
+
+    parser.add_argument(
+        "--l3wb",
+        type=int,
+        default=2,
+        help="Number of L3 cache writebuffers",
     )
 
     return parser.parse_args()
-
 
 def print_stats_simple(stats):
     instructions = int(
@@ -132,6 +133,7 @@ def print_stats_simple(stats):
     print(f"Simulated time (ms): {ticks/1e9:0.5f}")
     print(f"Executed instructions: {instructions}")
     print(f"Cycles: {cycles}")
+    print(f"IPC: {instructions/cycles}")
 
 
 def print_stats_ooo(stats):
@@ -146,10 +148,22 @@ def print_stats_ooo(stats):
         stats["simulated_end_time"] - stats["simulated_begin_time"]
     )  # In 10^-12s (ps)
 
+    # l1dmiss = int(stats["board"]["cache_hierarchy"]["l1dcache"]["overallMisses"]["value"])
+    # print(f"L1DCache MPKI: {l1dmiss * 1000 / instructions}")
+
+    # l1imiss = int(stats["board"]["cache_hierarchy"]["l1icache"]["overallMisses"]["value"])
+    # print(f"L1ICache MPKI: {l1imiss * 1000 / instructions}")
+    
+    # l2miss = int(stats["board"]["cache_hierarchy"]["l2cache"]["overallMisses"]["value"])
+    # print(f"L2Cache MPKI: {l2miss * 1000 / instructions}")
+
+    # l3miss = int(stats["board"]["cache_hierarchy"]["l3cache"]["overallMisses"]["value"])
+    # print(f"L3Cache MPKI: {l3miss * 1000 / instructions}")
+
     print(f"Simulated time (ms): {ticks/1e9:0.5f}")
-    print(f"Committed instructions: {instructions}")
-    print(f"Executed instructions: {executed_instructions}")
+    print(f"Executed instructions: {instructions}")
     print(f"Cycles: {cycles}")
+    print(f"IPC: {instructions/cycles}")
 
 
 if __name__ == "__m5_main__":
@@ -158,17 +172,23 @@ if __name__ == "__m5_main__":
     if args.processor_type == "simple":
         board = SimpleX86Board(
             clock_frequency=args.frequency,
-            l1_size=args.l1_size,
-            l2_size=args.l2_size,
         )
     elif args.processor_type == "out-of-order":
         board = OutOfOrderProcX86Board(
             clock_frequency=args.frequency,
-            l1_size=args.l1_size,
-            l2_size=args.l2_size,
             width=args.width,
             lsq_depth=args.lsq_depth,
             rob_entries=args.rob_entries,
+        )
+    elif args.processor_type == "verbatim" or "tuned" or "unconstrained":
+        board = SkylakeX86Board(
+            cpu_type=args.processor_type,
+            l1dmshr=args.l1dmshr,
+            l1dwb=args.l1dwb,
+            l2mshr=args.l2mshr,
+            l2dwb=args.l2wb,
+            l3mshr=args.l3mshr,
+            l3wb=args.l3wb,
         )
     else:
         raise Exception

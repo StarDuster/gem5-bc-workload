@@ -45,31 +45,27 @@ from gem5.isas import ISA
 from gem5.components.processors.simple_processor import SimpleProcessor
 from gem5.components.processors.cpu_types import CPUTypes
 from gem5.components.boards.simple_board import SimpleBoard
-from gem5.components.cachehierarchies.classic.private_l1_private_l2_cache_hierarchy import (
-    PrivateL1PrivateL2CacheHierarchy,
+
+from cachehierarchy.private_l1_private_l2_cache_hierarchy import (
+    PrivateL1PrivateL2CacheHierarchy
+)
+from cachehierarchy.three_level_cache_hierarchy import (
+    ThreeLevelCacheHierarchy
 )
 
 from gem5.components.memory.single_channel import SingleChannelDDR4_2400
 
-from processor import OutOfOrderProcessor
-
+from processor import OutOfOrderProcessor, SkylakeProcessor
 
 class SimpleX86Board(SimpleBoard):
     def __init__(
         self,
-        clock_frequency="3GHz",
-        l1_size="32KiB",
-        l2_size="256KiB",
+        clock_frequency="3.5GHz",
         processor=SimpleProcessor(cpu_type=CPUTypes.TIMING, isa=ISA.X86, num_cores=1),
+        cache_hierarchy=ThreeLevelCacheHierarchy()
     ):
-        memory = SingleChannelDDR4_2400()
-
-        cache_hierarchy = PrivateL1PrivateL2CacheHierarchy(
-            l1d_size=l1_size,
-            l1i_size=l1_size,
-            l2_size=l2_size,
-        )
-
+        memory = SingleChannelDDR4_2400("2GiB")
+        
         super().__init__(
             clk_freq=clock_frequency,
             processor=processor,
@@ -77,24 +73,35 @@ class SimpleX86Board(SimpleBoard):
             cache_hierarchy=cache_hierarchy,
         )
 
-
 class OutOfOrderProcX86Board(SimpleX86Board):
     def __init__(
         self,
-        clock_frequency="3GHz",
-        l1_size="32KiB",
-        l2_size="256KiB",
+        clock_frequency="3.5GHz",
         width=4,
         lsq_depth=64,
         rob_entries=128,
     ):
         super().__init__(
             clock_frequency=clock_frequency,
-            l1_size=l1_size,
-            l2_size=l2_size,
             processor=OutOfOrderProcessor(
                 width=width,
                 lsq_depth=lsq_depth,
                 rob_entries=rob_entries,
             ),
+        )
+
+class SkylakeX86Board(SimpleX86Board):
+    def __init__(
+        self,
+        cpu_type="verbatim",
+        l1dmshr=2,
+        l1dwb=2,
+        l2mshr=2,
+        l2dwb=2,
+        l3mshr=2,
+        l3wb=2,
+    ):  
+        super().__init__(
+            processor=SkylakeProcessor(cpu_type),
+            cache_hierarchy=ThreeLevelCacheHierarchy(l1dmshr, l1dwb, l2mshr, l2dwb, l3mshr, l3wb),
         )

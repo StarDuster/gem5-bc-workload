@@ -37,8 +37,8 @@ from gem5.resources.resource import CustomResource
 mm_workload = CustomWorkload(
     function="set_se_binary_workload",
     parameters={
-        "binary": CustomResource("workload/mm-gem5"),
-        "arguments": ["64"]
+        "binary": CustomResource("gem5-quickstart/workload/rw"),
+        "arguments": ["1145140"]
         # Note: 64 takes ~10s, 128 takes ~30s, and 256 takes ~4 min
     },
 )
