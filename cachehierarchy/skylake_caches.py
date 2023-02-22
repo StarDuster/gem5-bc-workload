@@ -99,7 +99,7 @@ class L1DCache(L1Cache):
     assoc = 8
 
     prefetcher = StridePrefetcher()
-    write_latency = 0
+
     # Parameters below are not determined yet
 
     write_allocator = WriteAllocator()
@@ -107,9 +107,10 @@ class L1DCache(L1Cache):
     write_allocator.no_allocate_limit = 8
     write_allocator.delay_threshold = 8
 
-    def __init__(self, l1dmshr, l1dwb):
+    def __init__(self, l1dwritelatency, l1dmshr, l1dwb):
         self.mshrs = l1dmshr
         self.write_buffers = l1dwb
+        self.write_latency = l1dwritelatency
         super(L1DCache, self).__init__()
 
     def connectCPU(self, cpu):
@@ -173,7 +174,7 @@ class L3Cache(PrefetchCache):
     """
 
     # Default parameters
-    size = '1MB'
+    size = '512kB'
     assoc = 8
     tag_latency = 44
     data_latency = 44

@@ -9,12 +9,13 @@ from gem5.isas import ISA
 from .skylake_caches import *
 
 class ThreeLevelCacheHierarchy(AbstractClassicCacheHierarchy):
-    def __init__(self, l1dmshr=2, l1dwb=2, l2mshr=2, l2wb=2, l3mshr=2, l3wb=2) -> None:
+    def __init__(self, l1dwritelatency=0, l1dmshr=2, l1dwb=2, l2mshr=2, l2wb=2, l3mshr=2, l3wb=2) -> None:
         AbstractClassicCacheHierarchy.__init__(self=self)
         self.membus = SystemXBar(width=192)
         self.membus.badaddr_responder = BadAddr()
         self.membus.default = Self.badaddr_responder.pio
 
+        self._l1dwritelatency = l1dwritelatency
         self._l1dmshr = l1dmshr
         self._l1dwb = l1dwb
         self._l2mshr = l2mshr
@@ -37,7 +38,7 @@ class ThreeLevelCacheHierarchy(AbstractClassicCacheHierarchy):
 
         # create caches and buses
         self.l1icache = L1ICache()
-        self.l1dcache = L1DCache(self._l1dmshr, self._l1dwb)
+        self.l1dcache = L1DCache(self._l1dwritelatency, self._l1dmshr, self._l1dwb)
         self.ptwcache = MMUCache()
         self.l2cache = L2Cache(self._l2mshr, self._l2wb)
         self.l3cache = L3Cache(self._l3mshr, self._l3wb)

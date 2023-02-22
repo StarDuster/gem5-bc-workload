@@ -54,6 +54,7 @@ from cachehierarchy.three_level_cache_hierarchy import (
 )
 
 from gem5.components.memory.single_channel import SingleChannelDDR4_2400
+from memory.single_channel_pcm import SingleChannelPCM_1200, SingleChannelNVM_1200
 
 from processor import OutOfOrderProcessor, SkylakeProcessor
 
@@ -64,7 +65,7 @@ class SimpleX86Board(SimpleBoard):
         processor=SimpleProcessor(cpu_type=CPUTypes.TIMING, isa=ISA.X86, num_cores=1),
         cache_hierarchy=ThreeLevelCacheHierarchy()
     ):
-        memory = SingleChannelDDR4_2400("2GiB")
+        memory = SingleChannelNVM_1200("8GiB")
         
         super().__init__(
             clk_freq=clock_frequency,
@@ -94,6 +95,7 @@ class SkylakeX86Board(SimpleX86Board):
     def __init__(
         self,
         cpu_type="verbatim",
+        l1dwritelatency=0,
         l1dmshr=2,
         l1dwb=2,
         l2mshr=2,
@@ -103,5 +105,5 @@ class SkylakeX86Board(SimpleX86Board):
     ):  
         super().__init__(
             processor=SkylakeProcessor(cpu_type),
-            cache_hierarchy=ThreeLevelCacheHierarchy(l1dmshr, l1dwb, l2mshr, l2dwb, l3mshr, l3wb),
+            cache_hierarchy=ThreeLevelCacheHierarchy(l1dwritelatency,l1dmshr, l1dwb, l2mshr, l2dwb, l3mshr, l3wb),
         )

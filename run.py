@@ -76,6 +76,13 @@ def setup_arguments():
     )
 
     parser.add_argument(
+        "--l1dwritelatency",
+        type=int,
+        default=0,
+        help="L1 data cache write latency",
+    )
+
+    parser.add_argument(
         "--l1dmshr",
         type=int,
         help="Number of L1 data cache mshrs",
@@ -183,6 +190,7 @@ if __name__ == "__m5_main__":
     elif args.processor_type == "verbatim" or "tuned" or "unconstrained":
         board = SkylakeX86Board(
             cpu_type=args.processor_type,
+            l1dwritelatency=args.l1dwritelatency,
             l1dmshr=args.l1dmshr,
             l1dwb=args.l1dwb,
             l2mshr=args.l2mshr,
