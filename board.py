@@ -65,7 +65,7 @@ class SimpleX86Board(SimpleBoard):
         processor=SimpleProcessor(cpu_type=CPUTypes.TIMING, isa=ISA.X86, num_cores=1),
         cache_hierarchy=ThreeLevelCacheHierarchy()
     ):
-        memory = SingleChannelNVM_1200("8GiB")
+        memory = SingleChannelPCM_1200("8GiB")
         
         super().__init__(
             clk_freq=clock_frequency,

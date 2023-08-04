@@ -49,9 +49,11 @@ from gem5.simulate.exit_event_generators import (
 )
 
 from board import SimpleX86Board, OutOfOrderProcX86Board, SkylakeX86Board
-from workload import mm_workload
+from workload import *
 
 from argparse import ArgumentParser
+
+import json
 
 
 def setup_arguments():
@@ -72,7 +74,7 @@ def setup_arguments():
         "--processor_type",
         choices=["simple", "out-of-order", "verbatim", "tuned", "unconstrained"],
         help="Simple processor is an in-order single cycle CPU.",
-        default="out-of-order",
+        default="tuned",
     )
 
     parser.add_argument(
@@ -124,6 +126,17 @@ def setup_arguments():
         help="Number of L3 cache writebuffers",
     )
 
+    parser.add_argument(
+        "--result_json",
+        type=str,
+        help="json output directory"
+    )
+
+    parser.add_argument(
+        "--bench",
+        type=str
+    )
+
     return parser.parse_args()
 
 def print_stats_simple(stats):
@@ -144,6 +157,7 @@ def print_stats_simple(stats):
 
 
 def print_stats_ooo(stats):
+
     instructions = int(
         stats["board"]["processor"]["cores"]["core"]["committedInsts"]["0"]["value"]
     )
@@ -164,13 +178,14 @@ def print_stats_ooo(stats):
     # l2miss = int(stats["board"]["cache_hierarchy"]["l2cache"]["overallMisses"]["value"])
     # print(f"L2Cache MPKI: {l2miss * 1000 / instructions}")
 
-    # l3miss = int(stats["board"]["cache_hierarchy"]["l3cache"]["overallMisses"]["value"])
-    # print(f"L3Cache MPKI: {l3miss * 1000 / instructions}")
+    # l3hit = int(stats["board"]["cache_hierarchy"]["l3cache"]["overallHit"]["value"])
+    # print(f"L3Cache MPKI: {l3hit * 1000 / instructions}")
 
     print(f"Simulated time (ms): {ticks/1e9:0.5f}")
     print(f"Executed instructions: {instructions}")
     print(f"Cycles: {cycles}")
     print(f"IPC: {instructions/cycles}")
+
 
 
 if __name__ == "__m5_main__":
@@ -201,7 +216,10 @@ if __name__ == "__m5_main__":
     else:
         raise Exception
 
-    board.set_workload(mm_workload)
+    if not args.bench:
+        board.set_workload(mm_workload)
+    else:
+        board.set_workload(eval(args.bench))
 
     if args.ignore_roi:
         begin_generator = skip_generator()
